@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -99,14 +100,15 @@ contract TokenArt is
         // set creator
         _tokenCreators.set(tokenArtId, msg.sender);
 
-        // transfer each erc20 token for specified amount
+        // transfer each erc20 token from owner to contract for specified amount
         for (uint256 j = 0; j < erc20TokenAddresses.length; j++) {
             uint256 totalTokensToTransfer = erc20TokenAmountEach[j].mul(
                 amountToElevate
             );
 
             IERC20 token = IERC20(erc20TokenAddresses[j]);
-            token.transferFrom(
+            SafeERC20.safeTransferFrom(
+                token,
                 msg.sender,
                 address(this),
                 totalTokensToTransfer
@@ -212,9 +214,9 @@ contract TokenArt is
             // send owed tokens
             if (contractTokenBalance < owedTokens) {
                 // send whole balance if theres a rounding error and we dont have enough
-                token.transfer(msg.sender, contractTokenBalance);
+                SafeERC20.safeTransfer(token, msg.sender, contractTokenBalance);
             } else {
-                token.transfer(msg.sender, owedTokens);
+                SafeERC20.safeTransfer(token, msg.sender, owedTokens);
             }
         }
 
