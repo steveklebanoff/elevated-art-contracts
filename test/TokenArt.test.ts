@@ -344,6 +344,4 @@ describe("TokenArt", function() {
         // ensure embedded piece is burned
         await assertBnRegAmount(dankNugs.balanceOf('0x0000000000000000000000000000000000000001', 420), 2);
     })
-    
-    // TODO: test URI fn
 })
