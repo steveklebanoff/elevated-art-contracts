@@ -162,7 +162,7 @@ contract TokenArt is
     {
         require(
             numToUnelevate <= balanceOf(msg.sender, tokenArtId),
-            "Must own tokens"
+            "Must own pieces"
         );
 
         TokenArtDetails memory artDetails = tokenArtDetails[tokenArtId];

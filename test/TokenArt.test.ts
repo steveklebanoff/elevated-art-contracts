@@ -143,7 +143,7 @@ describe("TokenArt", function() {
         await elevateAndAssert(testingVars);
 
 
-        // ---- unelevate 2 ---
+        // ---- unelevate 2 pieces---
         const unelevateRes = await testingVars.tokenArt.unelevate(1, 2, {from: joe});
         // ensure event
         const unelevatedEvent = unelevateRes.logs.find((l: any) => l.event === 'Unelevated');
@@ -188,9 +188,33 @@ describe("TokenArt", function() {
         await assertBnEthAmount(tofuToken.balanceOf(sophie), 45);
     });
     
-    // TODO: ensure unelevating works when there are two pieces elevated
-    
-    // TODO: ensure non-owners cant elevate
+
+    it("should only allow appropriate unelevations", async () => {
+        // ----- elevate ----
+        const testingVars = await setupTestingEnvironment({
+        potatoJoeAmount: 90,
+        tofuJoeAmount: 40,
+        potatoSophieAmount: 95,
+        tofuSophieAmount: 45
+        });
+        const { joe, sophie, tokenArt, potatoToken, tofuToken, dankNugs, sillyFlowers, doug} = testingVars;
+        await elevateAndAssert(testingVars); 
+        
+        // can't elevate pieces dont own
+        await testHelpers.expectRevert(
+            testingVars.tokenArt.unelevate(1, 2, {from: sophie}),
+            "Must own pieces"
+        );
+        
+        // cant elevate more pieces than you have
+        await testHelpers.expectRevert(
+            testingVars.tokenArt.unelevate(1, 4, {from: joe}),
+            "Must own pieces"
+        );
+        
+        const res = await testingVars.tokenArt.unelevate(1, 3, {from: joe});
+        expect(res.logs[2].event).to.eql('Unelevated');
+    });
     
     // TODO: test retrieving tip
     
