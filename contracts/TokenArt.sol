@@ -27,7 +27,7 @@ struct TokenArtDetails {
 }
 
 contract TokenArt is
-    ERC1155("https://elevated.art/api/token-art-metadata/{id}.json"),
+    ERC1155("https://elevated.art/api/token-art-metadata/{id}"),
     Ownable,
     ReentrancyGuard
 {
