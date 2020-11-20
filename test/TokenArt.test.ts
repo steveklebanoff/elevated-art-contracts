@@ -192,10 +192,10 @@ describe("TokenArt", function() {
     it("should only allow appropriate unelevations", async () => {
         // ----- elevate ----
         const testingVars = await setupTestingEnvironment({
-        potatoJoeAmount: 90,
-        tofuJoeAmount: 40,
-        potatoSophieAmount: 95,
-        tofuSophieAmount: 45
+            potatoJoeAmount: 90,
+            tofuJoeAmount: 40,
+            potatoSophieAmount: 95,
+            tofuSophieAmount: 45
         });
         const { joe, sophie, tokenArt, potatoToken, tofuToken, dankNugs, sillyFlowers, doug} = testingVars;
         await elevateAndAssert(testingVars); 
@@ -217,12 +217,54 @@ describe("TokenArt", function() {
     });
     
     // TODO: test retrieving tip
-    
-    // test: multiple items
+    it('should be able to deposit tip and only allow onwer to retrieve', async () => {
+        const testingVars = await setupTestingEnvironment({
+            potatoJoeAmount: 90,
+            tofuJoeAmount: 40,
+            potatoSophieAmount: 95,
+            tofuSophieAmount: 45
+        });
+        
+        const {tokenArt,dankNugs,potatoToken,tofuToken,joe,sophie} = testingVars;
+        
+        // elevate piece and send 0.5 tip
+        await dankNugs.mint(joe, 420, 50);
+        const elevatedRes = await tokenArt.elevate(
+            dankNugs.address,
+            420,
+            3,
+            [potatoToken.address, tofuToken.address],
+            [testHelpers.ether('11'), testHelpers.ether('12')],
+            0,
+            false,
+            'some metadata',
+            {from: joe, value: testHelpers.ether('0.5')}
+        );
+        
+        // try to withdraw as sophie
+        await testHelpers.expectRevert(
+            tokenArt.retrieveTips(testHelpers.ether('0.5'), {from: sophie}),
+            "Ownable: caller is not the owner"
+        );
+        
+        // withdraw as joe and make sure gained ETH
+        const joeTracker = await testHelpers.balance.tracker(joe);
+        await joeTracker.get();
+        
+        const gasPrice = 20000000000;
+        
+        const tipRes = await tokenArt.retrieveTips(testHelpers.ether('0.5'), {from: joe, gasPrice});
+        
+        const ethSpentOnGas = tipRes.receipt.gasUsed * gasPrice;
+        const ethGained = (await joeTracker.delta()).add(
+            new testHelpers.BN(ethSpentOnGas)
+        );
+        expect(ethGained.toString()).to.eql(
+            testHelpers.ether("0.5").toString()
+        );
+    });
     
     // test: timelock
-    
-    // TODO: try with 1 token
     
     // TODO: test URI fn
 })
