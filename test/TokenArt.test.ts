@@ -137,7 +137,7 @@ describe("TokenArt", function() {
             potatoJoeAmount: 90,
             tofuJoeAmount: 40,
             potatoSophieAmount: 95,
-            tofuSophieAmount: 45
+            tofuSophieAmount: 45,
         });
         const { joe, sophie, tokenArt, potatoToken, tofuToken, dankNugs, sillyFlowers, doug} = testingVars;
         await elevateAndAssert(testingVars);
@@ -304,6 +304,46 @@ describe("TokenArt", function() {
     })
     
     // test: having art burned afterwards
+    it('should burn original artwork when unelevated if set to true', async () => {
+        const testingVars = await setupTestingEnvironment({
+            potatoJoeAmount: 90,
+            tofuJoeAmount: 40,
+            potatoSophieAmount: 95,
+            tofuSophieAmount: 45
+        });
+        const {dankNugs, potatoToken, joe, tokenArt, tofuToken} = testingVars;
+        
+        // elevate piece
+        await dankNugs.mint(joe, 420, 50);
+        await tokenArt.elevate(
+            dankNugs.address,
+            420,
+            2,
+            [potatoToken.address],
+            [testHelpers.ether('10')],
+            0,
+            true,
+            'x',
+            {from: joe}
+        );
+        
+        // ensure contract has the three of the erc1155s
+        await assertBnRegAmount(dankNugs.balanceOf(tokenArt.address, 420), 2);
+        // ensure nulll address has zero
+        await assertBnRegAmount(dankNugs.balanceOf('0x0000000000000000000000000000000000000001', 420), 0);
+        
+        // unelevate 1
+        await testingVars.tokenArt.unelevate(1, 1, {from: joe});
+        
+        // ensure embedded piece is burned
+        await assertBnRegAmount(dankNugs.balanceOf('0x0000000000000000000000000000000000000001', 420), 1);
+        
+        // unelevate last one
+        await testingVars.tokenArt.unelevate(1, 1, {from: joe});
+
+        // ensure embedded piece is burned
+        await assertBnRegAmount(dankNugs.balanceOf('0x0000000000000000000000000000000000000001', 420), 2);
+    })
     
     // TODO: test URI fn
 })
