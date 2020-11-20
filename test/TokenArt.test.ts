@@ -264,6 +264,46 @@ describe("TokenArt", function() {
     });
     
     // test: timelock
+    it("should allow timelock to work", async () => {
+        const oneDay = 60 * 60 * 24;
+        const oneDayInFuture = (await testHelpers.time.latest()) + oneDay;
+        const testingVars = await setupTestingEnvironment({
+            potatoJoeAmount: 90,
+            tofuJoeAmount: 40,
+            potatoSophieAmount: 95,
+            tofuSophieAmount: 45
+        });
+        
+        const {dankNugs, potatoToken, joe, tokenArt, tofuToken} = testingVars;
+        
+        // elevate piece with timelock for one day in future
+        await dankNugs.mint(joe, 420, 50);
+        const elevatedRes = await tokenArt.elevate(
+            dankNugs.address,
+            420,
+            3,
+            [potatoToken.address],
+            [testHelpers.ether('10')],
+            oneDayInFuture,
+            true,
+            'x',
+            {from: joe}
+        );
+        
+        await testHelpers.expectRevert(
+            testingVars.tokenArt.unelevate(1, 3, {from: joe}),
+            "Must be past timelock time"
+        );
+        
+        // travel in future and make sure can unelevate
+        await testHelpers.time.increaseTo(oneDayInFuture + 1);
+        
+        const unelevateRes = await testingVars.tokenArt.unelevate(1, 3, {from: joe});
+        const unelevatedEvent = unelevateRes.logs.find((l: any) => l.event === 'Unelevated');
+        expect(unelevatedEvent).to.not.eql(undefined);
+    })
+    
+    // test: having art burned afterwards
     
     // TODO: test URI fn
 })
