@@ -216,7 +216,6 @@ describe("TokenArt", function() {
         expect(res.logs[2].event).to.eql('Unelevated');
     });
     
-    // TODO: test retrieving tip
     it('should be able to deposit tip and only allow onwer to retrieve', async () => {
         const testingVars = await setupTestingEnvironment({
             potatoJoeAmount: 90,
